@@ -629,6 +629,7 @@ public final class Long extends Number implements Comparable<Long> {
      */
     public static long parseLong(String s) throws NumberFormatException {
         return parseLong(s, 10);
+        //没有支持LongCache，解析小数值时性能不如valueOf
     }
 
     /**
@@ -803,7 +804,9 @@ public final class Long extends Number implements Comparable<Long> {
         return Long.valueOf(parseLong(s, 10));
     }
 
+    //采用一个Long数组缓存1个字节的数值范围。
     private static class LongCache {
+        // 禁止实例化
         private LongCache(){}
         // 缓存，范围从 -128 到 127,+1 是因为有个 0
         static final Long cache[] = new Long[-(-128) + 127 + 1];
@@ -824,6 +827,7 @@ public final class Long extends Number implements Comparable<Long> {
      * {@link #Long(long)}, as this method is likely to yield
      * significantly better space and time performance by caching
      * frequently requested values.
+     * 如果创建一个新的实例是非必须的，那么这个方法
      *
      * Note that unlike the {@linkplain Integer#valueOf(int)
      * corresponding method} in the {@code Integer} class, this method
@@ -836,6 +840,7 @@ public final class Long extends Number implements Comparable<Long> {
      */
     public static Long valueOf(long l) {
         final int offset = 128;
+        //如果数值在-128 -> 127之间，则使用LongCache缓存。类似，Short、Integer也有类似缓存。
         if (l >= -128 && l <= 127) { // will cache
             return LongCache.cache[(int)l + offset];
         }

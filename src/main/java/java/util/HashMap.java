@@ -1317,6 +1317,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
         int oldCap = (oldTab == null) ? 0 : oldTab.length;
         int oldThr = threshold;
         int newCap, newThr = 0;
+        //扩容场景，计算newThr、newCap
         if (oldCap > 0) {
             //老数组大小大于等于最大值，不扩容
             if (oldCap >= MAXIMUM_CAPACITY) {
@@ -1332,14 +1333,14 @@ public class HashMap<K,V> extends AbstractMap<K,V>
             newCap = oldThr;
         else {
             // zero initial threshold signifies using defaults
-            //初始化
+            //初始化场景
             newCap = DEFAULT_INITIAL_CAPACITY;
             newThr = (int)(DEFAULT_LOAD_FACTOR * DEFAULT_INITIAL_CAPACITY);
         }
         if (newThr == 0) {
             float ft = (float)newCap * loadFactor;
             newThr = (newCap < MAXIMUM_CAPACITY && ft < (float)MAXIMUM_CAPACITY ?
-                      (int)ft : Integer.MAX_VALUE);
+                      (int)ft : Integer.MAX_VALUE); //防止溢出
         }
         threshold = newThr;
         @SuppressWarnings({"rawtypes","unchecked"})

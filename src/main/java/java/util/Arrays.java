@@ -3175,6 +3175,8 @@ public class Arrays {
      * Such indices will exist if and only if the specified length
      * is greater than that of the original array.
      * The resulting array is of exactly the same class as the original array.
+     * 复制一个特定的数组，截断或者用null填充，因此副本有特定的长度。在所有方面，原始数组和副本数组会包含相同的值。
+     *
      *
      * @param <T> the class of the objects in the array
      * @param original the array to be copied

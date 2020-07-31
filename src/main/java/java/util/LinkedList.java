@@ -198,6 +198,7 @@ public class LinkedList<E>
 
     /**
      * Unlinks non-null last node l.
+     * 移除非null的尾部节点l
      */
     private E unlinkLast(Node<E> l) {
         // assert l == last && l != null;
@@ -272,6 +273,7 @@ public class LinkedList<E>
 
     /**
      * Removes and returns the first element from this list.
+     * 从list中移除头节点元素，并且返回。类似于Stack的pop
      *
      * @return the first element from this list
      * @throws NoSuchElementException if this list is empty
@@ -285,6 +287,7 @@ public class LinkedList<E>
 
     /**
      * Removes and returns the last element from this list.
+     * 从列表中移除尾部节点，并且返回该元素。
      *
      * @return the last element from this list
      * @throws NoSuchElementException if this list is empty
@@ -574,8 +577,9 @@ public class LinkedList<E>
 
     /**
      * Returns the (non-null) Node at the specified element index.
+     * 根据index查找特定元素
      */
-    // 根据搜索因为查询节点
+    // 根据搜索因为查询节点。。如果二分法查找，如果index属于前半部分，则从头部开始查找，否则从尾部开始查找。
     Node<E> node(int index) {
         // index 处于队列的前半部分，从头开始找
         if (index < (size >> 1)) {

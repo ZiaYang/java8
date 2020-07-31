@@ -90,6 +90,8 @@ import java.util.function.UnaryOperator;
  * exception for its correctness:  <i>the fail-fast behavior of iterators
  * should be used only to detect bugs.</i>
  *
+ * for循环或迭代器迭代过程中，数组大小发生改变，会fail-fast快速失败，抛出异常ConcurrentModificationException。
+ *
  * <p>This class is a member of the
  * <a href="{@docRoot}/../technotes/guides/collections/index.html">
  * Java Collections Framework</a>.
@@ -103,6 +105,7 @@ import java.util.function.UnaryOperator;
  * @since   1.2
  */
 
+//非线程安全，线程安全版本Collections.synchronizedList
 public class ArrayList<E> extends AbstractList<E>
     implements List<E>, RandomAccess, Cloneable, java.io.Serializable
 {
@@ -114,7 +117,7 @@ public class ArrayList<E> extends AbstractList<E>
   //数组存放的容器
   private static final Object[] EMPTY_ELEMENTDATA = {};
 
-  //数组使用的大小
+  //数组使用的大小. 没有volatile修饰，非线程安全。
   private int size;
 
 
@@ -144,6 +147,7 @@ public class ArrayList<E> extends AbstractList<E>
    * @throws IllegalArgumentException if the specified initial capacity
    *         is negative
    */
+  // 带参构造器，初始化指定容量的数组.
   public ArrayList(int initialCapacity) {
     if (initialCapacity > 0) {
       this.elementData = new Object[initialCapacity];
@@ -156,7 +160,7 @@ public class ArrayList<E> extends AbstractList<E>
   }
 
 
-  //  无参数构造器，默认是空数组
+  //  无参数构造器，默认是空数组。并非是10，在第一次add时需要扩容至10。
   public ArrayList() {
     this.elementData = DEFAULTCAPACITY_EMPTY_ELEMENTDATA;
   }
@@ -227,6 +231,8 @@ public class ArrayList<E> extends AbstractList<E>
    * Some VMs reserve some header words in an array.
    * Attempts to allocate larger arrays may result in
    * OutOfMemoryError: Requested array size exceeds VM limit
+   *
+   * 能分配的最大的数组大小。一些VM保留了对象头空间在一个数组中，尝试分配更大的数组可能会导致OOM，请求的数组大小超过了虚拟机限制。x
    */
   private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
 
@@ -434,7 +440,7 @@ public class ArrayList<E> extends AbstractList<E>
   }
 
 
-
+  //没有检查是否为null。因此允许add null，并且会调整容量。
   public boolean add(E e) {
     //确保数组大小足够，不够需要扩容
     ensureCapacityInternal(size + 1);  // Increments modCount!!
@@ -443,7 +449,7 @@ public class ArrayList<E> extends AbstractList<E>
     return true;
   }
   private void ensureCapacityInternal(int minCapacity) {
-    //如果是空数组，就从最小容量和默认容量10之间取最大值
+    //如果是空数组，就从最小容量和默认容量10之间取最大值.至少是10咯
     if (elementData == DEFAULTCAPACITY_EMPTY_ELEMENTDATA) {
       minCapacity = Math.max(DEFAULT_CAPACITY, minCapacity);
     }
@@ -457,14 +463,14 @@ public class ArrayList<E> extends AbstractList<E>
     if (minCapacity - elementData.length > 0)
       grow(minCapacity);
   }
-  //老的数组大小2倍，最后把现有数据拷贝到新的数组里面去
+  //老的数组大小1.5倍，最后把现有数据拷贝到新的数组里面去
   private void grow(int minCapacity) {
     // overflow-conscious code
     int oldCapacity = elementData.length;
     // oldCapacity >> 1 是把 oldCapacity / 2 的意思
     int newCapacity = oldCapacity + (oldCapacity >> 1);
 
-    // 如果扩容后的值 < 我们的期望值，扩容后的值就等于我们的期望值
+    // 如果扩容后的值 < 我们的期望值，扩容后的值就等于我们的期望值。有可能因为addAll一次性加入过多元素，导致一次扩容无法容纳，因此小于期望值。
     if (newCapacity - minCapacity < 0)
       newCapacity = minCapacity;
 
@@ -515,7 +521,7 @@ public class ArrayList<E> extends AbstractList<E>
    * @return <tt>true</tt> if this list contained the specified element
    */
 
-  // 根据值去删除
+  // 根据值去删除..删除第一个匹配的值，支持删除null。ArrayList是有序的。
   public boolean remove(Object o) {
     // 如果值是空的，找到第一个值是空的删除
     if (o == null) {
@@ -536,12 +542,14 @@ public class ArrayList<E> extends AbstractList<E>
     return false;
   }
 
-  /*
+  /**
    * Private remove method that skips bounds checking and does not
    * return the value removed.
+   * 私有删除方法，跳过边界检查，并且不会返回删除的值。
    */
-
-
+  // 删除实现原理，将index后面的元素全部往前移动，用arraycopy实现，最后释放掉数组最后一个位置。
+  // 存在着内存复制，这样的实现，对于删除来说性能并不是很好。如果是链表，删除操作会更好。
+  // 因此可以尽量不要删除元素。
   private void fastRemove(int index) {
     // 记录数组的结构要发生变动了
     modCount++;
@@ -551,7 +559,7 @@ public class ArrayList<E> extends AbstractList<E>
     if (numMoved > 0)
       // 从 index +1 位置开始被拷贝，拷贝的起始位置是 index
       System.arraycopy(elementData, index+1, elementData, index, numMoved);
-    //清楚数组最后一个位置
+    //清除数组最后一个位置，释放引用，让GC回收对象。
     elementData[--size] = null; // clear to let GC do its work
   }
 
@@ -612,6 +620,7 @@ public class ArrayList<E> extends AbstractList<E>
 
     Object[] a = c.toArray();
     int numNew = a.length;
+    //一次性扩容到位
     ensureCapacityInternal(size + numNew);  // Increments modCount
 
     int numMoved = size - index;
@@ -881,6 +890,7 @@ public class ArrayList<E> extends AbstractList<E>
       return (E) elementData[lastRet = i];
     }
 
+
     public void remove() {
       // 如果上一次操作时，数组的位置已经小于 0 了，说明数组已经被删除完了
       if (lastRet < 0)
@@ -893,7 +903,7 @@ public class ArrayList<E> extends AbstractList<E>
         cursor = lastRet;
         // -1 表示元素已经被删除，这里也防止重复删除
         lastRet = -1;
-        // 删除元素时 modCount 的值已经发生变化，再此赋值给 expectedModCount
+        // 删除元素时 modCount 的值已经发生变化，再此赋值给 expectedModCount。。更新它。
         expectedModCount = modCount;
       } catch (IndexOutOfBoundsException ex) {
         throw new ConcurrentModificationException();
@@ -922,6 +932,7 @@ public class ArrayList<E> extends AbstractList<E>
       checkForComodification();
     }
 
+    //版本号比较
     final void checkForComodification() {
       if (modCount != expectedModCount)
         throw new ConcurrentModificationException();
