@@ -162,6 +162,10 @@ import java.io.IOException;
  * @see     Hashtable
  * @since   1.4
  */
+    //LinkedHashMap 是 HashMap 的子类，拥有其一切特性。
+    // LinkedHashMap具有HashMap的所有结构，同时在HashMap的基础上实现了一个类似于LinkedList的双向链表。
+    // HashMap的数组-链表-红黑树的结构 与 双向链表结构互相独立，互不相关单独维护。以用双向链表实现其有序性。
+    //最大的区别实际上是在Entry中加入了before和after两个指针维护双向链表。
 public class LinkedHashMap<K,V>
     extends HashMap<K,V>
     implements Map<K,V>

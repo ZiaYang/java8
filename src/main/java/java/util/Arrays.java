@@ -3821,6 +3821,8 @@ public class Arrays {
     public static <T> List<T> asList(T... a) {
         // 此处 new  的 ArrayList，并不是 java.util.ArrayList
         // 而是下面的静态类 ArrayList。
+        //1. 当a发生改动时会影响到该List。2.返回的List不支持add、remove等操作，因为内部类ArrayList没有实现相关方法。
+        //其底层仍然是很原始的数组实现，而且并没有使用内存复制System.arrayCopy复制a，而是直接用引用指向a
         return new ArrayList<>(a);
     }
 

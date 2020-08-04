@@ -353,7 +353,9 @@ public class PriorityQueue<E> extends AbstractQueue<E>
         return true;
     }
 
+    //优先级排序
     private void siftUp(int k, E x) {
+        // 优先使用外部Comparator
         if (comparator != null)
             siftUpUsingComparator(k, x);
         else

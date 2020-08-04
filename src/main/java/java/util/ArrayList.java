@@ -381,12 +381,13 @@ public class ArrayList<E> extends AbstractList<E>
   @SuppressWarnings("unchecked")
   // List 转化成数组
   public <T> T[] toArray(T[] a) {
-    // 如果数组长度不够，按照 List 的大小进行拷贝，return 的时候返回的都是正确的数组
+    // 如果数组长度不够，创建一个List大小的空数组，并将List中数据复制至该新创建的数组，并且返回。
+    // 不会将数据复制至参数a中，因此a不会改变。
     if (a.length < size)
       // Make a new array of a's runtime type, but my contents:
       return (T[]) Arrays.copyOf(elementData, size, a.getClass());
     System.arraycopy(elementData, 0, a, 0, size);
-    // 数组长度大于 List 大小的，赋值为 null
+    // 数组长度大于 List 大小的部分，赋值为 null。将数据复制至a中，其余部分null填充。
     if (a.length > size)
       a[size] = null;
     return a;

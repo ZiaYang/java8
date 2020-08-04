@@ -87,6 +87,11 @@ import java.util.Spliterator;
  * @author Doug Lea
  * @param <E> the type of elements held in this collection
  */
+// ArrayBlockingQueue 与 LinkedBlockingQueue类似。都是阻塞队列，并且都采用了ReentrantLock，以及Condition条件。
+// 但不同之处在于一个用数组实现一个用链表实现，这就决定了，其主要区别。Array是有界的，并且固定大小，不扩容（也没有扩容的必要）。
+// 而Linked大小是很大的，int的最大值，而且大小没有成本限制。
+//对于arrayBlockingQueue，一个有界数组实现的队列，为了达到原址存取数据，引入了putIndex、takeIndex直接存取，效率很高。
+// put、take形成了一个环，当存取到队尾的时候，再重新从0开始再来。
 public class ArrayBlockingQueue<E> extends AbstractQueue<E>
         implements BlockingQueue<E>, java.io.Serializable {
 
@@ -97,11 +102,6 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
      * necessary here.
      */
     private static final long serialVersionUID = -817911632652898426L;
-
-
-
-
-
 
 
     // 队列存放在 object 的数组里面
@@ -131,6 +131,7 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
      * Shared state for currently active iterators, or null if there
      * are known not to be any.  Allows queue operations to update
      * iterator state.
+     * 当前已激活的迭代器的标准状态，或者当队列没有任何数据时为null。允许队列操作更新迭代器状态。
      */
     transient Itrs itrs = null;
 
@@ -184,6 +185,9 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
     // 2：找到要删除元素的下一个
     // 如果下一个元素不是 putIndex，就把下一个元素往前移动一位
     // 如果下一个元素是 putIndex，把 putIndex 的值修改成删除的位置
+
+    // 总结而言，之所以要在删除元素的同时，更新putIndex、takeIndex、以及移动元素位置。
+    // 都是为了不让takeIndex在take数据的时候遇到空槽位而陷入无限自旋等待。从这个目的出发而言，就更容易理解为什么要枚举这么多特殊情况进行不同的处理。
     void removeAt(final int removeIndex) {
         final Object[] items = this.items;
         // 情况1 如果删除位置正好等于下次要拿数据的位置

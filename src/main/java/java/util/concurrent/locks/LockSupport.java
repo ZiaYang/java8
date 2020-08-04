@@ -147,11 +147,11 @@ public class LockSupport {
      * Disables the current thread for thread scheduling purposes unless the
      * permit is available.
      *
-     * 如果许可可用，线程会直接消费并立马返回
-     * 如果许可不可用，线程调度会把当前线程置为阻塞，直到以下三件事情触发：
+     * 如果许可 可用，线程会直接消费并立马返回
+     * 如果许可 不可用，线程调度会把当前线程置为阻塞，直到以下三件事情触发：
      * 1：其他线程对当前线程执行了unpark
      * 2：其他线程打断了当前线程
-     * 3：The call spuriously (that is, for no reason) returns
+     * 3：The call spuriously (that is, for no reason) returns 方法无缘无故返回了，没有任何原因？
      * @param blocker the synchronization object responsible for this
      *        thread parking
      * @since 1.6

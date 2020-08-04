@@ -114,7 +114,7 @@ public class CopyOnWriteArrayList<E>
     final transient ReentrantLock lock = new ReentrantLock();
 
     /** The array, accessed only via getArray/setArray. */
-    // volatile 关键字修饰，可见的
+    // volatile 关键字修饰，可见的. 其可见性针对于对array数组的引用（数组的内存地址），但无法感知数组本身数据的改变。
     // array 只开放出 get set
     private transient volatile Object[] array;
 
@@ -489,6 +489,7 @@ public class CopyOnWriteArrayList<E>
      */
 
     // 添加元素到指定位置
+    // 先加锁， 复制数组，替换array字段的引用指向新数组，释放锁。
     public void add(int index, E element) {
         final ReentrantLock lock = this.lock;
         lock.lock();

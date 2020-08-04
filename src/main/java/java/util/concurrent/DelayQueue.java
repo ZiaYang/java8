@@ -72,6 +72,8 @@ import java.util.*;
  * @author Doug Lea
  * @param <E> the type of elements held in this collection
  */
+    // ReentrantLock + PriorityQueue 。
+    // 底层使用了排序、超时阻塞实现延迟队列，排序使用priorityQueue（优先队列），超时等待使用了锁的条件等待能力。
 public class DelayQueue<E extends Delayed> extends AbstractQueue<E>
     implements BlockingQueue<E> {
 
@@ -80,20 +82,27 @@ public class DelayQueue<E extends Delayed> extends AbstractQueue<E>
 
     /**
      * Thread designated（特定） to wait for the element at the head of
-     * the queue.  This variant of the Leader-Follower pattern
+     * the queue.  This variant（变体） of the Leader-Follower pattern
      * (http://www.cs.wustl.edu/~schmidt/POSA/POSA2/) serves to
-     * minimize unnecessary timed waiting.  When a thread becomes
-     * the leader, it waits only for the next delay to elapse, but
-     * other threads await indefinitely（无限期）.  The leader thread must
+     * minimize unnecessary timed waiting（最小化不必要的等待时间）.
+     * When a thread becomes the leader, it waits only for the next delay to elapse, but
+     * other threads await indefinitely（无限期）.
+     * 当一个线程变成leader时，它仅仅等待下一次延迟的到来，而其他线程会无限期等待。
+     * The leader thread must
      * signal some other thread before returning from take() or
      * poll(...), unless some other thread becomes leader in the
-     * interim.  Whenever the head of the queue is replaced with
+     * interim.
+     * leader线程从take或poll中退出之前，必须signal通知其他线程，除非其他的线程临时成为了leader。
+     *
+     * Whenever the head of the queue is replaced with
      * an element with an earlier expiration time, the leader
      * field is invalidated by being reset to null, and some
      * waiting thread, but not necessarily the current leader, is
      * signalled.  So waiting threads must be prepared to acquire
      * and lose leadership while waiting.
+     * 因此等待线程在等待时，必须时刻准备去获取或者放弃leader地位。
      */
+    // 等待队列头元素到期的线程
     private Thread leader = null;
 
     /**
@@ -208,7 +217,7 @@ public class DelayQueue<E extends Delayed> extends AbstractQueue<E>
     /**
      * Retrieves and removes the head of this queue, waiting if necessary
      * until an element with an expired delay is available on this queue.
-     *
+     * 取回并且移除队列的头部元素，直到一个有延迟过期的元素在该队列中可用为止。
      * @return the head of this queue
      * @throws InterruptedException {@inheritDoc}
      */
@@ -217,25 +226,34 @@ public class DelayQueue<E extends Delayed> extends AbstractQueue<E>
         lock.lockInterruptibly();
         try {
             for (;;) {
-                // 从对头拿数据出来
+                // 1. 从对头拿数据出来
                 E first = q.peek();
-                // 如果为空，说明队列中，没有数据，阻塞住
+                // 2. 如果为空，说明队列中，没有数据，阻塞住
                 if (first == null)
                     available.await();
+                // 3. 如果first不为空，队列中有数据，但需要检查该数据是否已经到期。
                 else {
                     // 获取队头数据的过期时间
                     long delay = first.getDelay(NANOSECONDS);
-                    // 如果过期了，直接返回对头数据
+
+                    // 4. 如果过期了，直接返回对头数据
                     if (delay <= 0)
                         return q.poll();
+
+                    // 5. 如果没有到期，需要等待。。就等这花开了，再摘吧
                     // 引用置为 null ，便于 gc
                     first = null;
                     // 阻塞线程等待，leader 不为空的话，
-                    // 表示当前队列元素之前已经被设置过阻塞时间了
+                    // 表示当前队列元素之前已经被设置过阻塞时间了？ 或者说，是已经有线程抢先排队等待了？
                     if (leader != null)
                         available.await();
+
+                    // leader为null，抢占leader位置。 我可是第一个等这朵花开的，后来的谁也别跟我抢@！
                     else {
                         Thread thisThread = Thread.currentThread();
+                        // 这里并没有使用CAS抢占leader位置，也就是说该方法是唯一一个更改leader值的地方？
+                        // 不，其他地方也有更改leader的地方，但是注意，lock是当前延迟队列共享的锁。
+                        // 因此当该方法拿到锁时，其他方法即便是offer也拿不到锁。大门是同一个大门，大门上的锁。
                         leader = thisThread;
                         try {
                             available.awaitNanos(delay);

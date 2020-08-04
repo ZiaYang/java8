@@ -114,6 +114,8 @@ import java.util.function.Consumer;
  * @since 1.2
  */
 
+//单纯的红黑树结构，没有像HashMap那样引入数组。可以用红黑树保证数据顺序，如果需要用Key排序可以使用该类。
+
 public class TreeMap<K,V>
     extends AbstractMap<K,V>
     implements NavigableMap<K,V>, Cloneable, java.io.Serializable

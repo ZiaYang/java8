@@ -976,7 +976,9 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      * to incorporate impact of the highest bits that would otherwise
      * never be used in index calculations because of table bounds.
      */
-
+    // 当key为null时，返回值为0.
+    // 先获取key的hashCode，然后将hashCode右移16位，分散，接着再异或保证高低位都参与计算。
+    // key在数组中的位置公式 tab[(n-1) & hash]，取模操作比较费时，不如&
     static final int hash(Object key) {
         int h;
         return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
@@ -1237,6 +1239,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      * @param evict if false, the table is in creation mode.
      * @return previous value, or null if none
      */
+    //允许key为null
     //1:空数组初始化。
     //2:key计算的数组索引下，如果没有值，直接新增赋值
     //3:如果hash冲突，分成2种，一个是链表，一个是红黑树
@@ -1310,8 +1313,15 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     }
 
     //初始化或者双倍扩容，如果是空的，按照初始容量进行初始化
-    //扩容是双倍扩容，要么还在原来索引位置
+    //扩容是双倍扩容，要么还在原来索引位置，要么在新的数组中以2的幂移动到新位置。元素的位置要么是在原位置，要么是在原位置再移动2次幂的位置
     // 要么 movewith a power of two offset in the new table (不知道如何翻译)
+
+    /**
+     * 总结：
+     * 1. 先计算扩容后的阀值和容量
+     * 2. 创建新的数组，开始从原数组从头开始复制元素至 新数组。
+     * 3.
+     */
     final Node<K,V>[] resize() {
         Node<K,V>[] oldTab = table;
         int oldCap = (oldTab == null) ? 0 : oldTab.length;
@@ -1345,8 +1355,11 @@ public class HashMap<K,V> extends AbstractMap<K,V>
         threshold = newThr;
         @SuppressWarnings({"rawtypes","unchecked"})
             Node<K,V>[] newTab = (Node<K,V>[])new Node[newCap];
-        //这里也有问题，此时的table其实是个空值，get有可能是空的
+        //TODO 这里也有问题，此时的table其实是个空值，get有可能是空的。
+        // 如果此时有另一个线程访问同一个HashMap对象的话，可能会看到中间态的table，其内容并不完整。
+        // 所以为什么要提前赋值呢？在复制之前，就将table指向新的table，这样子，复制过程中访问的都是oldTab
         table = newTab;
+        //开始复制数组中的元素到新的数组中
         if (oldTab != null) {
             for (int j = 0; j < oldCap; ++j) {
                 Node<K,V> e;
@@ -1358,8 +1371,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                     //红黑树
                     else if (e instanceof TreeNode)
                         ((TreeNode<K,V>)e).split(this, newTab, j, oldCap);
-                    //规避了8版本以下的成环问题
-                    else { // preserve order
+                    //链表。规避了8版本以下的成环问题
+                    else { // preserve order 保留顺序。
                         // loHead 表示老值,老值的意思是扩容后，该链表中计算出索引位置不变的元素
                         // hiHead 表示新值，新值的意思是扩容后，计算出索引位置发生变化的元素
                         // 举个例子，数组大小是 8 ，在数组索引位置是 1 的地方挂着两个值，两个值的 hashcode 是9和33。
@@ -1380,7 +1393,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                                     loTail.next = e;
                                 loTail = e;
                             }
-                            // (e.hash & oldCap) == 0 表示新值链表
+                            // (e.hash & oldCap) ！= 0 表示新值链表
                             else {
                                 if (hiTail == null)
                                     hiHead = e;
@@ -1394,9 +1407,18 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                             loTail.next = null;
                             newTab[j] = loHead;
                         }
-                        // 新值链表赋值到新的数组索引位置
+                        // 新值链表赋值到新的数组索引位置。 新值是如何计算得到其槽位下标？如果新值有多个值，但其hash值重算后应该都会一样?
+                        /**
+                         * （n-1) & hash.计算元素在数组的槽位，其中n为2的幂。(n-1)的二进制，前面都是0，后面全是1。(n-1) & hash意味着，取hash的低m位m为2只保留hash的二进制对应着1的部分。
+                         * 而n<<1后，（n-1)多了一位1，意味着hash可以多保留一位。而这一位只可能是0或者1，0则位置不变，1则为新位置。
+                         * 而对于新增的位为1的hash而言，（2*n-1) & hash = ((n-1) & hash) + n..即：新位置 = 老位置 + oldCap.
+                         * 我们在扩充HashMap的时候，不需要像JDK1.7的实现那样重新计算hash.
+                         * 只需要看看原来的hash值新增的那个bit是1还是0就好了，是0的话索引没变，是1的话索引变成“原索引+oldCap”。
+                         * 既省去了重新计算hash值的时间，而且同时，由于新增的1bit是0还是1可以认为是随机的，因此resize的过程，均匀的把之前的冲突的节点分散到新的bucket了。
+                         */
                         if (hiTail != null) {
                             hiTail.next = null;
+                            //j+oldCap是怎么得来的呢？
                             newTab[j + oldCap] = hiHead;
                         }
                     }

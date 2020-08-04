@@ -90,6 +90,9 @@ import java.util.function.Consumer;
  * @author Doug Lea
  * @param <E> the type of elements held in this collection
  */
+    // 链表 + Lock+ Condition + 自旋等待
+    // 链表默认大小为int最大值
+    // 核心三部分，链表存储 锁 迭代器
 public class LinkedBlockingQueue<E> extends AbstractQueue<E>
         implements BlockingQueue<E>, java.io.Serializable {
     private static final long serialVersionUID = -6903933977591709194L;
@@ -402,8 +405,9 @@ public class LinkedBlockingQueue<E> extends AbstractQueue<E>
 
 
 
-    // 把e新增到队列的尾部。
-    // 如果有可以新增的空间的话，直接新增成功，否则当前线程陷入等待
+    // 把e新增到队列的尾部，阻塞方法。 也是blockingQueue的由来。
+    // 如果有可以新增的空间的话，直接新增成功，否则当前线程陷入等待.
+    // 如果enqueue成功，则尝试signal唤醒一个put等待线程。或者当队列在put之前是空队列，可以尝试唤醒一个take线程。
     public void put(E e) throws InterruptedException {
         // e 为空，抛出异常
         if (e == null) throw new NullPointerException();

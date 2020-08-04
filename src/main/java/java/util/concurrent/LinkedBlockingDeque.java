@@ -644,6 +644,8 @@ public class LinkedBlockingDeque<E>
     /**
      * @throws NullPointerException {@inheritDoc}
      * @throws InterruptedException {@inheritDoc}
+     *
+     * 如果队列已满，会一直阻塞
      */
     public void put(E e) throws InterruptedException {
         putLast(e);
@@ -676,6 +678,7 @@ public class LinkedBlockingDeque<E>
         return pollFirst();
     }
 
+    // 如果队列为空，会一直阻塞
     public E take() throws InterruptedException {
         return takeFirst();
     }

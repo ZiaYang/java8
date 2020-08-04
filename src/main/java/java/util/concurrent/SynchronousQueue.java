@@ -213,6 +213,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
             //未投递的消息，或者未消费的消息
             Object item;
             int mode;
+            //item、mode字段总是先写后读，因此无需使用volatile
             // Note: item and mode fields don't need to be volatile
             // since they are always written before, and read after,
             // other volatile/atomic operations.
