@@ -25,6 +25,8 @@
 
 package java.lang;
 
+import java.util.concurrent.Callable;
+
 /**
  *
  * 现象：任何 class 只要实现了 Runnable，就能被线程执行。
@@ -64,9 +66,12 @@ public interface Runnable {
      * to create a thread, starting the thread causes the object's
      * <code>run</code> method to be called in that separately executing
      * thread.
+     *
      * <p>
      * The general contract of the method <code>run</code> is that it may
      * take any action whatsoever.
+     *
+     * 返回值为空 而 {@link Callable#call()}有返回值
      *
      * @see     java.lang.Thread#run()
      */

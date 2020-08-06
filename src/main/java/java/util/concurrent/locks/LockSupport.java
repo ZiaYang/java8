@@ -123,6 +123,14 @@ import sun.misc.Unsafe;
  *   }
  * }}</pre>
  */
+
+/**
+ * LockSupport提供的是一个许可，如果存在许可，线程在调用park的时候，会立马返回，此时许可也会被消费掉.
+ * 如果没有许可，则会阻塞。调用unpark的时候，如果许可本身不可用，则会使得许可可用.
+ *
+ * 1. 许可，通过unpark释放
+ * 2. LockSupport是非可重入阻塞，调用多次park会多次阻塞。
+ */
 public class LockSupport {
     private LockSupport() {} // Cannot be instantiated.
 
@@ -156,11 +164,14 @@ public class LockSupport {
      *        thread parking
      * @since 1.6
      */
+    // blocker仅仅是作为线程阻塞的原因
     public static void park(Object blocker) {
         Thread t = Thread.currentThread();
+        //记录当前线程阻塞的原因,底层就是unsafe.putObject,就是把对象存储起来
         setBlocker(t, blocker);
         //false 纳秒  true 毫秒
         UNSAFE.park(false, 0L);
+        //线程恢复后，去掉阻塞原因
         setBlocker(t, null);
     }
 

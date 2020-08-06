@@ -39,7 +39,7 @@ package java.util.concurrent.locks;
  * 一个同步器，被一个线程拥有
  * A synchronizer that may be exclusively owned by a thread.  This
  * class provides a basis for creating locks and related synchronizers
- * that may entail a notion of ownership.  The
+ * that may entail（意味着） a notion（概念） of ownership.  The
  * {@code AbstractOwnableSynchronizer} class itself does not manage or
  * use this information. However, subclasses and tools may use
  * appropriately maintained values to help control and monitor access
@@ -48,6 +48,7 @@ package java.util.concurrent.locks;
  * @since 1.6
  * @author Doug Lea
  */
+// 方便跟踪获得锁的线程，用于帮助监控和诊断工具识别哪些线程持有了锁
 public abstract class AbstractOwnableSynchronizer
     implements java.io.Serializable {
 

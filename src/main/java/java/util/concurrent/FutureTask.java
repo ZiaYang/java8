@@ -62,6 +62,8 @@ import java.util.concurrent.locks.LockSupport;
  * @author Doug Lea
  * @param <V> The result type returned by this FutureTask's {@code get} methods
  */
+
+// FutureTask结合了RunnableFuture（Runnable和Future的能力合体）和Callable（通过组合的方式使用）
 public class FutureTask<V> implements RunnableFuture<V> {
     /*
      * Revision notes: This differs from previous versions of this
@@ -214,6 +216,7 @@ public class FutureTask<V> implements RunnableFuture<V> {
         return report(s);
     }
 
+    //等待任务执行完成
     private int awaitDone(boolean timed, long nanos)
         throws InterruptedException {
         // 计算等待终止时间，如果一直等待的话，终止时间为 0
@@ -240,7 +243,7 @@ public class FutureTask<V> implements RunnableFuture<V> {
             // 如果正在执行，当前线程让出 cpu，重新竞争，防止 cpu 飙高
             else if (s == COMPLETING) // cannot time out yet
                 Thread.yield();
-                // 如果第一次运行，新建 waitNode，当前线程就是 waitNode 的属性
+            // 如果第一次运行，新建 waitNode，当前线程就是 waitNode 的属性
             else if (q == null)
                 q = new WaitNode();
                 // 默认第一次都会执行这里，执行成功之后，queued 就为 true，就不会再执行了

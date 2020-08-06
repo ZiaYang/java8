@@ -60,9 +60,10 @@ package java.util.concurrent;
 public interface Callable<V> {
     /**
      * Computes a result, or throws an exception if unable to do so.
-     *
+     * 计算一个结果，无法做到则抛出一个异常
      * @return computed result
      * @throws Exception if unable to compute a result
      */
+    // 有返回值
     V call() throws Exception;
 }

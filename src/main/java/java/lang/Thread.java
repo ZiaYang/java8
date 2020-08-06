@@ -149,8 +149,14 @@ import sun.security.util.SecurityConstants;
  * @see     #stop()
  * @since   JDK1.0
  */
-public
-class Thread implements Runnable {
+
+/**
+ * 创建线程的三种方式。有返回值，无返回值。
+ * 1. 继承Thread，实现run方法。无返回值
+ * 2. new Thread(new Runnable(){}) 无返回值
+ * 3. new Thread(new FutureTask(){}) 有返回值
+ */
+public class Thread implements Runnable {
     /* Make sure registerNatives is the first thing <clinit> does. */
     private static native void registerNatives();
     static {
@@ -228,6 +234,7 @@ class Thread implements Runnable {
 
     /* Java thread status for tools,
      * initialized to indicate thread 'not yet started'
+     * Java线程状态，初始化去表明线程"尚未启动"
      */
     private volatile int threadStatus = 0;
 
@@ -361,6 +368,7 @@ class Thread implements Runnable {
 
     /**
      * Initializes a Thread with the current AccessControlContext.
+     * 用当前访问控制上下文初始化一个线程
      * @see #init(ThreadGroup,Runnable,String,long,AccessControlContext)
      */
     private void init(ThreadGroup g, Runnable target, String name,
@@ -370,16 +378,16 @@ class Thread implements Runnable {
 
     /**
      * Initializes a Thread.
-     *
-     * @param g the Thread group
+     * 初始化一个线程
+     * @param g the Thread group 线程组
      * @param target the object whose run() method gets called
      * @param name the name of the new Thread
      * @param stackSize the desired stack size for the new thread, or
-     *        zero to indicate that this parameter is to be ignored.
+     *        zero to indicate that this parameter is to be ignored. 新线程需要的堆栈大小，如果为0则表示这个参数应该被忽略。
      * @param acc the AccessControlContext to inherit, or
      *            AccessController.getContext() if null
      */
-    // g 代表线程组，线程组可以对组内的线程进行批量的操作，比如批量的打断 interrupt
+    // g 代表线程组，线程组可以对组内的线程进行批量的操作，比如批量的打断 interrupt。。线程组（方便管理众多线程，实现批量操作）
     // target 是我们要运行的对象
     // stackSize 可以设置堆栈的大小
     private void init(ThreadGroup g, Runnable target, String name,
@@ -395,16 +403,16 @@ class Thread implements Runnable {
         // 否则继承父线程的线程组
         SecurityManager security = System.getSecurityManager();
         if (g == null) {
-            /* Determine if it's an applet or not */
+            /* Determine if it's an applet or not 确实它是否是一个applet*/
 
             /* If there is a security manager, ask the security manager
-               what to do. */
+               what to do.  如果有安全管理器，则询问安全管理器怎么去做。*/
             if (security != null) {
                 g = security.getThreadGroup();
             }
 
             /* If the security doesn't have a strong opinion of the matter
-               use the parent thread group. */
+               use the parent thread group. 如果安全管理器对线程组有强烈的看法，则使用父线程组作为新线程的线程组*/
             if (g == null) {
                 g = parent.getThreadGroup();
             }
@@ -415,7 +423,7 @@ class Thread implements Runnable {
         g.checkAccess();
 
         /*
-         * Do we have the required permissions?
+         * Do we have the required permissions? 我们是否有请求权限？检查请求权限
          */
         if (security != null) {
             if (isCCLOverridden(getClass())) {
@@ -423,6 +431,7 @@ class Thread implements Runnable {
             }
         }
 
+        // 增加线程组的未启动线程数量计数器
         g.addUnstarted();
 
         this.group = g;
@@ -430,7 +439,7 @@ class Thread implements Runnable {
         this.daemon = parent.isDaemon();
         // 子线程继承父线程的优先级属性
         this.priority = parent.getPriority();
-        // classLoader
+        // classLoader 继承父线程的classLoader
         if (security == null || isCCLOverridden(parent.getClass()))
             this.contextClassLoader = parent.getContextClassLoader();
         else
@@ -444,7 +453,7 @@ class Thread implements Runnable {
         if (parent.inheritableThreadLocals != null)
             this.inheritableThreadLocals =
                 ThreadLocal.createInheritedMap(parent.inheritableThreadLocals);
-        /* Stash the specified stack size in case the VM cares */
+        /* Stash the specified stack size in case the VM cares  保存特定的堆栈大小，以防虚拟机需要*/
         this.stackSize = stackSize;
 
         /* Set thread ID */
@@ -476,16 +485,19 @@ class Thread implements Runnable {
     }
 
     /**
-     * Allocates a new {@code Thread} object. This constructor has the same
+     * Allocates a new {@code Thread} object. 分配一个新的Thread对象。
+     * This constructor has the same
      * effect as {@linkplain #Thread(ThreadGroup,Runnable,String) Thread}
      * {@code (null, target, gname)}, where {@code gname} is a newly generated
      * name. Automatically generated names are of the form
      * {@code "Thread-"+}<i>n</i>, where <i>n</i> is an integer.
      *
+     * 用"Thread-n"模式自动生成一个名称，n是一个整数
      * @param  target
      *         the object whose {@code run} method is invoked when this thread
      *         is started. If {@code null}, this classes {@code run} method does
      *         nothing.
+     *         当线程启动时，其对象的run方法会被调用。如果为null，那么这个类run方法什么都不做。
      */
     // 名称的初始化
     public Thread(Runnable target) {
@@ -494,7 +506,7 @@ class Thread implements Runnable {
 
     /**
      * Creates a new Thread that inherits the given AccessControlContext.
-     * This is not a public constructor.
+     * This is not a public constructor. 非公共构造器。只有System调用。
      */
     Thread(Runnable target, AccessControlContext acc) {
         init(null, target, "Thread-" + nextThreadNum(), 0, acc);
@@ -709,17 +721,21 @@ class Thread implements Runnable {
     /**
      * Causes this thread to begin execution; the Java Virtual Machine
      * calls the <code>run</code> method of this thread.
+     * 该线程开始执行的原因。JVM虚拟机调用了当前线程的run方法。
      * <p>
      * The result is that two threads are running concurrently: the
      * current thread (which returns from the call to the
      * <code>start</code> method) and the other thread (which executes its
      * <code>run</code> method).
+     * 结果就是，两个线程并发执行中：当前线程（从start方法返回）和其他线程（执行了当前线程的run方法的线程）
      * <p>
      * It is never legal to start a thread more than once.
      * In particular, a thread may not be restarted once it has completed
      * execution.
+     * 启动一个线程超过一次是永远不合法的。特别是，线程一旦完成执行将不能被重启。
      *
      * @exception  IllegalThreadStateException  if the thread was already
+     * 如果线程已经启动，再次执行start，会抛出异常。
      *               started.
      * @see        #run()
      * @see        #stop()
@@ -731,9 +747,10 @@ class Thread implements Runnable {
          * group threads created/set up by the VM. Any new functionality added
          * to this method in the future may have to also be added to the VM.
          *
-         * A zero status value corresponds to state "NEW".
+         * A zero status value corresponds（对应） to state "NEW".
          */
         // 如果没有初始化，抛异常
+        //
         if (threadStatus != 0)
             throw new IllegalThreadStateException();
 
@@ -744,7 +761,7 @@ class Thread implements Runnable {
         // started 是个标识符，我们在初始化一些东西的时候，经常这么写
         boolean started = false;
         try {
-            // 这里会创建一个新的线程，执行完成之后，新的线程已经在运行了，既 target 的内容已经在运行了
+            // native方法 创建一个新的线程，执行完成之后，新的线程已经在运行了，既 target 的内容已经在运行了
             start0();
             // 这里执行的还是主线程
             started = true;
@@ -778,7 +795,7 @@ class Thread implements Runnable {
      * @see     #Thread(ThreadGroup, Runnable, String)
      */
     @Override
-    // 简单的运行，不会新起线程
+    // 简单的运行，不会新起线程。还是在主线程中执行
     public void run() {
         if (target != null) {
             target.run();
@@ -938,6 +955,7 @@ class Thread implements Runnable {
      * immediately from the selection operation, possibly with a non-zero
      * value, just as if the selector's {@link
      * java.nio.channels.Selector#wakeup wakeup} method were invoked.
+     * 如果当前线程被阻塞在一个Nio的Selector中，那么线程的中断状态将会被设置，并且马上从选择器操作中返回，
      *
      * <p> If none of the previous conditions hold then this thread's interrupt status will be set. </p>
      *
@@ -956,6 +974,7 @@ class Thread implements Runnable {
         synchronized (blockerLock) {
             Interruptible b = blocker;
             if (b != null) {
+                // native方法
                 interrupt0();           // Just to set the interrupt flag
                 b.interrupt(this);
                 return;

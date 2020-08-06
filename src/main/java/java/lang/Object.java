@@ -379,6 +379,7 @@ public class Object {
      * @see        java.lang.Object#notify()
      * @see        java.lang.Object#notifyAll()
      */
+    // 会释放锁资源
     public final native void wait(long timeout) throws InterruptedException;
 
     /**

@@ -36,12 +36,12 @@
 package java.util.concurrent;
 
 /**
- * 代表着异步的计算，提供了计算是否完成的 check，等待完成，取回等多种方法
+ *
  * A {@code Future} represents the result of an asynchronous
  * computation.  Methods are provided to check if the computation is
  * complete, to wait for its completion, and to retrieve the result of
  * the computation.
- *
+ * Future代表着一个异步计算的结果。方法提供了检查计算是否已经完成、等待计算完成、取回计算结果的能力。
  *
  * 得到结果可以使用 get，会一直阻塞到结果计算完成。
  * The result can only be retrieved using method

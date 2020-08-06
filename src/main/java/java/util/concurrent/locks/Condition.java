@@ -190,10 +190,12 @@ import java.util.Date;
  * @since 1.5
  * @author Doug Lea
  */
+// 当Lock代替Synchronized来加锁实现同步时，Condition可以用来代替Object中的相应监控方法。如Object#wait、Object#notify、Object#notifyAll
+    //Condition绑定在锁上，通过Lock#Condition方法可以生成实例
 public interface Condition {
 
     /**
-     * 使当前线程一直等待，直到被 signalled 或被打断
+     * 使当前线程一直等待，直到被 signalled 信号通知 或被打断
      * Causes the current thread to wait until it is signalled or
      * {@linkplain Thread#interrupt interrupted}.
      *
@@ -202,6 +204,7 @@ public interface Condition {
      * 2. 有线程使用了 signalAll 方法。
      * 3. 其他线程打断了当前线程，并且当前线程支持被打断。
      * 4. 被虚假唤醒(即使没有满足以上 3 个条件，wait 也是可能被偶尔唤醒，see https://en.wikipedia.org/wiki/Spurious_wakeup)
+     *
      * <p>The lock associated with this {@code Condition} is atomically
      * released and the current thread becomes disabled for thread scheduling
      * purposes and lies dormant until <em>one</em> of four things happens:
@@ -216,7 +219,7 @@ public interface Condition {
      * <li>A &quot;<em>spurious wakeup</em>&quot; occurs.
      * </ul>
      *
-     * 在所有的用例中，线程从条件队列中苏醒时，必须重新获得锁
+     * 在所有的用例中，线程从条件队列中苏醒时，必须重新获得锁。当线程返回时，它必须保证已经拥有该锁。
      * <p>In all cases, before this method can return the current thread must
      * re-acquire the lock associated with this condition. When the
      * thread returns it is <em>guaranteed</em> to hold this lock.

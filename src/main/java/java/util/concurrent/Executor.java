@@ -130,13 +130,15 @@ package java.util.concurrent;
  * @since 1.5
  * @author Doug Lea
  */
+  //与Runnable、Callable用来定义任务不同，Executor是用来执行Runnable或Callable这样的任务的.
+    // 这样设计，有利于将任务与执行任务解耦。
 public interface Executor {
 
     /**
      * Executes the given command at some time in the future.  The command
      * may execute in a new thread, in a pooled thread, or in the calling
      * thread, at the discretion of the {@code Executor} implementation.
-     *
+     * 在未来某个时间点执行给定的任务。任务可能会在一个新的线程上、在一个池化线程、或者在一个调度线程
      * @param command the runnable task
      * @throws RejectedExecutionException if this task cannot be
      * accepted for execution

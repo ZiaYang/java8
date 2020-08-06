@@ -860,6 +860,8 @@ class ThreadGroup implements Thread.UncaughtExceptionHandler {
      * can be collected if they are never started, but they must be
      * counted so that daemon thread groups with unstarted threads in
      * them are not destroyed.
+     * 增加线程组中unstarted线程数量。 未启动的线程是不会添加到线程组中的，因此如果他们永远不会启动，他们就可以被收集。
+     * 但是他们必须被计数，因此守护线程组和未启动线程没有被销毁。
      */
     void addUnstarted() {
         synchronized(this) {

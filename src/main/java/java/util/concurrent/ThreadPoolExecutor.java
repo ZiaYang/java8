@@ -365,7 +365,7 @@ import java.util.*;
 public class ThreadPoolExecutor extends AbstractExecutorService {
 
     /**
-     * The main pool control state, ctl, is an atomic integer packing two conceptual fields
+     * The main pool control state, ctl, is an atomi2c integer packing two conceptual fields
      *   workerCount, indicating the effective number of threads
      *   runState,    indicating whether running, shutting down etc
      *
@@ -835,7 +835,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
 
     // 结合线程池的情况看是否可以添加新的 worker
     // firstTask 不为空可以直接执行，为空执行不了，Thread.run()方法有判断，Runnable为空不执行
-    // core 为 true 表示线程最大新增个数是 coresize，false 表示最大新增个数是 maxsize
+    // core 为 true 表示线程最大新增个数是 coreSize，false 表示最大新增个数是 maxSize。 线程新增的上限。
     // 返回 true 代表成功，false 失败
     // break retry 跳到retry处，且不再进入循环
     // continue retry 跳到retry处，且再次进入循环
@@ -1332,28 +1332,30 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
          * If it fails, we know we are shut down or saturated and so reject the task.
          */
         int c = ctl.get();
-        // 工作的线程小于核心线程数，创建新的线程，成功返回，失败不抛异常
+        // 工作的线程小于核心线程数，创建新的线程执行，成功返回，失败不抛异常
         if (workerCountOf(c) < corePoolSize) {
             if (addWorker(command, true))
                 return;
             // 线程池状态可能由变化
             c = ctl.get();
         }
-        // 工作的线程大于核心线程数，或者新建线程失败
+        // 剩下的条件是，工作的线程大于核心线程数，或者新建线程失败。 从这里开始，线程总数大于coreSize，因此后面的addWorker的core入参都是false。
+
         // 线程池状态正常，并且可以入队的话，尝试入队列
         if (isRunning(c) && workQueue.offer(command)) {
             int recheck = ctl.get();
-            // 如果线程池状态异常 尝试从队列中移除任务，可以移除的话就拒绝掉任务
+
+            // 入队后，如果线程池状态异常 尝试从队列中移除任务，可以移除的话就拒绝掉任务
             if (!isRunning(recheck) && remove(command))
                 reject(command);
-            // 发现可运行的线程数是 0，就初始化一个线程，这里是个极限情况，入队的时候，突然发现
-            // 线程都被回收了
+
+            // 发现线程总数（无论是否空闲）是 0，就初始化一个线程，这里是个极限情况，入队的时候，突然发现线程都被回收了
             else if (workerCountOf(recheck) == 0)
                 // Runnable是空的，不会影响新增线程，但是线程在 start 的时候不会运行
                 // Thread.run() 里面有判断
                 addWorker(null, false);
         }
-        // 队列满了，开启线程到 maxSize，如果失败直接拒绝,
+        // 队列满了，开启线程到 maxSize，如果失败直接拒绝。addWorker的core入参false，表示线程数量上限为maxSize，非coreSize。
         else if (!addWorker(command, false))
             reject(command);
     }

@@ -68,6 +68,11 @@ import java.util.*;
  * @since 1.5
  * @author Doug Lea
  */
+
+/**
+ * 1. 提供了将Runnable、Callable转换成FutureTask的能力
+ * 2. 使用execute方法，执行FutureTask
+ */
 public abstract class AbstractExecutorService implements ExecutorService {
 
     /**

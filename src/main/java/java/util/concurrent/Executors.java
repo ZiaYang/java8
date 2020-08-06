@@ -501,6 +501,8 @@ public class Executors {
 
     /**
      * A callable that runs given task and returns given result
+     * 适配器模式
+     * 将Runnable转换成Callable的工具类，因为Callable的call方法有返回值，功能更强大。
      */
     static final class RunnableAdapter<T> implements Callable<T> {
         final Runnable task;
@@ -511,6 +513,7 @@ public class Executors {
         }
         public T call() {
             task.run();
+            // todo result是怎么被赋值的呢？
             return result;
         }
     }
