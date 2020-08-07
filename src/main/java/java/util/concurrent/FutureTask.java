@@ -108,9 +108,10 @@ public class FutureTask<V> implements RunnableFuture<V> {
     /** The underlying callable; nulled out after running */
     private Callable<V> callable;
     /** The result to return or exception to throw from get() */
-    // 异步线程返回的结果，读写锁保证了其线程安全
+    // 异步线程返回的结果，读写锁保证了其线程安全。 可以用get获取。
     private Object outcome; // non-volatile, protected by state reads/writes
     /** The thread running the callable; CASed during run() */
+    // 执行callable的线程，在run（）中CAS。。问题是，这个字段是什么时候赋值的呢？
     private volatile Thread runner;
     /** Treiber stack of waiting threads */
     private volatile WaitNode waiters;
@@ -121,8 +122,10 @@ public class FutureTask<V> implements RunnableFuture<V> {
      * @param s completed state value
      */
     @SuppressWarnings("unchecked")
+    // 从一个已完成的任务中返回结果或者抛出异常。
     private V report(int s) throws ExecutionException {
         Object x = outcome;
+        // 根据任务执行的状态state判断，任务是否正常完成，还是抛出异常。
         if (s == NORMAL)
             return (V)x;
         if (s >= CANCELLED)
@@ -191,6 +194,7 @@ public class FutureTask<V> implements RunnableFuture<V> {
     /**
      * @throws CancellationException {@inheritDoc}
      */
+    // 该方法会阻塞直到任务完成
     public V get() throws InterruptedException, ExecutionException {
         int s = state;
         // 如果任务刚创建或在执行中，等待执行成功
@@ -281,6 +285,7 @@ public class FutureTask<V> implements RunnableFuture<V> {
     /**
      * Sets the result of this future to the given value unless
      * this future has already been set or has been cancelled.
+     * 除非任务已经被设置结果或已经被取消，否则将future任务的结果设置为给定的值
      *
      * <p>This method is invoked internally by the {@link #run} method
      * upon successful completion of the computation.
@@ -319,7 +324,7 @@ public class FutureTask<V> implements RunnableFuture<V> {
      * 如果需要开启子线程的话，只能走线程池，线程池会帮忙开启线程
      */
     public void run() {
-        // 状态不是任务创建，或者当前任务已经有线程在执行了
+        // 状态不是任务创建，或者当前任务已经有线程在执行了。
         if (state != NEW ||
             !UNSAFE.compareAndSwapObject(this, runnerOffset,
                                          null, Thread.currentThread()))
@@ -346,6 +351,7 @@ public class FutureTask<V> implements RunnableFuture<V> {
         } finally {
             // runner must be non-null until state is settled to
             // prevent concurrent calls to run()
+            // runner必须非null，知道state被确定去防止并发调用run()
             runner = null;
             // state must be re-read after nulling runner to prevent
             // leaked interrupts
@@ -496,6 +502,7 @@ public class FutureTask<V> implements RunnableFuture<V> {
     // Unsafe mechanics
     private static final sun.misc.Unsafe UNSAFE;
     private static final long stateOffset;
+    // 标记当前FutureTask在哪个线程上执行，对于同一个任务不能同一时间执行多次。
     private static final long runnerOffset;
     private static final long waitersOffset;
     static {

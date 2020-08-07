@@ -80,6 +80,7 @@ public class ThreadLocal<T> {
      * in the common case where consecutively constructed ThreadLocals
      * are used by the same threads, while remaining well-behaved in
      * less common cases.
+     *
      */
     private final int threadLocalHashCode = nextHashCode();
 
@@ -177,10 +178,12 @@ public class ThreadLocal<T> {
     }
 
     /**
-     * Variant of set() to establish initialValue. Used instead
+     * Variant（变体） of set() to establish initialValue. Used instead
      * of set() in case user has overridden the set() method.
-     *
-     * @return the initial value
+     * set方法的变体，进行初始化。
+     * 没有使用set方法，以防用户覆写了set（）方法
+     * 跟set没啥区别，
+     * @return the initial value 默认返回null
      */
     private T setInitialValue() {
         T value = initialValue();
@@ -297,6 +300,7 @@ public class ThreadLocal<T> {
 
     /**
      * ThreadLocalMap 是定制的 map，只适合用于维护线程的本地值
+     *
      * ThreadLocalMap is a customized hash map suitable only for maintaining thread local values.
      * No operations are exported outside of the ThreadLocal class.
      * The class is package private to allow declaration of fields in class Thread.
@@ -494,7 +498,7 @@ public class ThreadLocal<T> {
             // 计算 key 在数组中的下标
             int i = key.threadLocalHashCode & (len-1);
 
-            // 查看 i 索引位置有没有值，有值的话，索引位置 + 1，直到找到没有值的位置
+            // 查看 i 索引位置有没有值，有值的话，索引位置 + 1，直到找到没有值的位置。开放寻址法？结构简单，但空间利用率不高。
             // 这种解决 hash 冲突的策略，也导致了其在 get 时查找策略有所不同，体现在 getEntryAfterMiss 中
             for (Entry e = tab[i];
                  e != null;
@@ -512,10 +516,11 @@ public class ThreadLocal<T> {
                     return;
                 }
             }
-            // 当前 i 位置是无值的，可以被当前 thradLocal 使用
+            // e == null时
+            // 当前 i 位置是无值的，可以被当前 threadLocal 使用
             tab[i] = new Entry(key, value);
             int sz = ++size;
-            // 当数组大小大于等于扩容阈值(数组大小的三分之二)时，进行扩容
+            // 如果没有任何旧条目被清除，并且 当数组大小大于等于扩容阈值(数组大小的三分之二)时，进行扩容
             if (!cleanSomeSlots(i, sz) && sz >= threshold)
                 rehash();
         }
@@ -659,7 +664,7 @@ public class ThreadLocal<T> {
         }
 
         /**
-         * Heuristically scan some cells looking for stale entries.
+         * Heuristically（启发式） scan some cells looking for stale（陈旧的） entries.
          * This is invoked when either a new element is added, or
          * another stale one has been expunged. It performs a
          * logarithmic number of scans, as a balance between no
@@ -680,7 +685,7 @@ public class ThreadLocal<T> {
          * using straight log n. But this version is simple, fast, and
          * seems to work well.)
          *
-         * @return true if any stale entries have been removed.
+         * @return true if any stale entries have been removed. 如果有任何旧条目被清除，就返回true
          */
         private boolean cleanSomeSlots(int i, int n) {
             boolean removed = false;
@@ -707,7 +712,8 @@ public class ThreadLocal<T> {
             expungeStaleEntries();
 
             // Use lower threshold for doubling to avoid hysteresis
-            // 这里加了一个判断，当数组已用空间大于等于数组的四分之三时，扩容，刚才是判断三分之二，这里的判断更加严格，原因：Use lower threshold for doubling to avoid hysteresis
+            // 这里加了一个判断，当数组已用空间大于等于数组的四分之三时，扩容，刚才是判断三分之二，这里的判断更加严格，
+            // 原因：Use lower threshold for doubling to avoid hysteresis
             if (size >= threshold - threshold / 4)
                 resize();
         }
@@ -752,12 +758,14 @@ public class ThreadLocal<T> {
 
         /**
          * Expunge all stale entries in the table.
+         * 清除数组中所有陈旧的条目
          */
         private void expungeStaleEntries() {
             Entry[] tab = table;
             int len = tab.length;
             for (int j = 0; j < len; j++) {
                 Entry e = tab[j];
+                // e.get() == null 说明已经被GC回收了？
                 if (e != null && e.get() == null)
                     expungeStaleEntry(j);
             }
